@@ -1,0 +1,135 @@
+-- AngelFly
+-- Works on PC and Mobile (joystick input via Humanoid.MoveDirection)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local flying = false
+local speed = 60
+local holdingUp = false
+local holdingDown = false
+
+-- ---------- UI ----------
+local gui = Instance.new("ScreenGui")
+gui.Name = "AngelFly"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
+
+local container = Instance.new("Frame")
+container.Size = UDim2.new(0, 180, 0, 160)
+container.Position = UDim2.new(0, 16, 0.5, -80)
+container.BackgroundTransparency = 1
+container.Parent = gui
+
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 8)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = container
+
+local function styleBtn(btn, text)
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundTransparency = 0.05
+    btn.TextColor3 = Color3.fromRGB(0, 110, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.Text = text
+    btn.BorderSizePixel = 0
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = btn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(180, 220, 255)
+    stroke.Thickness = 1.5
+    stroke.Parent = btn
+end
+
+local toggle = Instance.new("TextButton")
+toggle.LayoutOrder = 1
+styleBtn(toggle, "👼 AngelFly: OFF")
+toggle.Parent = container
+
+local upBtn = Instance.new("TextButton")
+upBtn.LayoutOrder = 2
+styleBtn(upBtn, "▲ Up")
+upBtn.Parent = container
+
+local downBtn = Instance.new("TextButton")
+downBtn.LayoutOrder = 3
+styleBtn(downBtn, "▼ Down")
+downBtn.Parent = container
+
+-- ---------- Fly logic ----------
+local function getHRP()
+    local char = player.Character
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function getHum()
+    local char = player.Character
+    return char and char:FindFirstChildOfClass("Humanoid")
+end
+
+local function setFlying(state)
+    flying = state
+    if flying then
+        toggle.Text = "👼 AngelFly: ON"
+        toggle.BackgroundColor3 = Color3.fromRGB(150, 255, 150)
+    else
+        toggle.Text = "👼 AngelFly: OFF"
+        toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    end
+end
+
+toggle.Activated:Connect(function()
+    setFlying(not flying)
+end)
+
+local function connectHold(btn, setter)
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            setter(true)
+        end
+    end)
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            setter(false)
+        end
+    end)
+end
+
+connectHold(upBtn, function(v) holdingUp = v end)
+connectHold(downBtn, function(v) holdingDown = v end)
+
+-- Stop fly on respawn
+player.CharacterAdded:Connect(function()
+    setFlying(false)
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not flying then return end
+
+    local hrp = getHRP()
+    local hum = getHum()
+    if not hrp or not hum then return end
+
+    -- MoveDirection already follows camera/joystick on mobile & PC
+    local move = hum.MoveDirection
+    if move.Magnitude > 0 then
+        move = move.Unit
+    else
+        move = Vector3.zero
+    end
+
+    local y = 0
+    if holdingUp then y = speed
+    elseif holdingDown then y = -speed end
+
+    -- Holds altitude when not pressing Up/Down
+    hrp.AssemblyLinearVelocity = Vector3.new(move.X * speed, y, move.Z * speed)
+end)
