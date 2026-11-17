@@ -1,0 +1,270 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local lp = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local pg = lp:WaitForChild("PlayerGui")
+
+-- Gui
+local gui = Instance.new("ScreenGui")
+gui.Name = "AngelFly"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = pg
+
+-- Toggle button
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 46, 0, 46)
+toggle.Position = UDim2.new(0, 10, 0, 10)
+toggle.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+toggle.Text = "A"
+toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggle.Font = Enum.Font.GothamBold
+toggle.TextSize = 20
+toggle.BorderSizePixel = 0
+toggle.Parent = gui
+Instance.new("UICorner", toggle).CornerRadius = UDim.new(1, 0)
+local tStroke = Instance.new("UIStroke", toggle)
+tStroke.Color = Color3.fromRGB(90, 90, 255)
+tStroke.Thickness = 1.5
+
+-- Main window
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 220)
+frame.Position = UDim2.new(0, 70, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
+local fStroke = Instance.new("UIStroke", frame)
+fStroke.Color = Color3.fromRGB(80, 80, 255)
+fStroke.Thickness = 1.2
+
+-- Draggable title bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 34)
+titleBar.BackgroundTransparency = 1
+titleBar.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -70, 1, 0)
+title.Position = UDim2.new(0, 12, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "AngelFly"
+title.TextColor3 = Color3.fromRGB(235, 235, 240)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 26, 0, 26)
+closeBtn.Position = UDim2.new(1, -32, 0, 4)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(180, 180, 190)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 18
+closeBtn.Parent = titleBar
+
+-- Flight state
+local flying = false
+local movingUp = false
+local movingDown = false
+local speed = 60
+
+-- Fly button
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(1, -24, 0, 50)
+flyBtn.Position = UDim2.new(0, 12, 0, 44)
+flyBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+flyBtn.Text = "FLIGHT: OFF"
+flyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyBtn.Font = Enum.Font.GothamBold
+flyBtn.TextSize = 16
+flyBtn.BorderSizePixel = 0
+flyBtn.Parent = frame
+Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(0, 10)
+local fbs = Instance.new("UIStroke", flyBtn)
+fbs.Color = Color3.fromRGB(100, 100, 255)
+fbs.Thickness = 1
+
+-- Status
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, -24, 0, 20)
+status.Position = UDim2.new(0, 12, 0, 100)
+status.BackgroundTransparency = 1
+status.Text = "Status: Offline"
+status.TextColor3 = Color3.fromRGB(160, 160, 170)
+status.Font = Enum.Font.Gotham
+status.TextSize = 14
+status.TextXAlignment = Enum.TextXAlignment.Left
+status.Parent = frame
+
+-- Speed controls
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0, 80, 0, 20)
+speedLabel.Position = UDim2.new(0, 12, 0, 126)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Speed: " .. speed
+speedLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextSize = 14
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = frame
+
+local spdMinus = Instance.new("TextButton")
+spdMinus.Size = UDim2.new(0, 24, 0, 22)
+spdMinus.Position = UDim2.new(0, 96, 0, 126)
+spdMinus.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+spdMinus.Text = "-"
+spdMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+spdMinus.Font = Enum.Font.GothamBold
+spdMinus.TextSize = 16
+spdMinus.BorderSizePixel = 0
+spdMinus.Parent = frame
+Instance.new("UICorner", spdMinus).CornerRadius = UDim.new(0, 6)
+
+local spdPlus = Instance.new("TextButton")
+spdPlus.Size = UDim2.new(0, 24, 0, 22)
+spdPlus.Position = UDim2.new(0, 124, 0, 126)
+spdPlus.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+spdPlus.Text = "+"
+spdPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+spdPlus.Font = Enum.Font.GothamBold
+spdPlus.TextSize = 16
+spdPlus.BorderSizePixel = 0
+spdPlus.Parent = frame
+Instance.new("UICorner", spdPlus).CornerRadius = UDim.new(0, 6)
+
+-- Up / Down buttons
+local upBtn = Instance.new("TextButton")
+upBtn.Size = UDim2.new(0, 70, 0, 30)
+upBtn.Position = UDim2.new(0, 12, 0, 156)
+upBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+upBtn.Text = "UP"
+upBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+upBtn.Font = Enum.Font.GothamBold
+upBtn.TextSize = 14
+upBtn.BorderSizePixel = 0
+upBtn.Parent = frame
+Instance.new("UICorner", upBtn).CornerRadius = UDim.new(0, 8)
+
+local downBtn = Instance.new("TextButton")
+downBtn.Size = UDim2.new(0, 70, 0, 30)
+downBtn.Position = UDim2.new(0, 96, 0, 156)
+downBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+downBtn.Text = "DOWN"
+downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+downBtn.Font = Enum.Font.GothamBold
+downBtn.TextSize = 14
+downBtn.BorderSizePixel = 0
+downBtn.Parent = frame
+Instance.new("UICorner", downBtn).CornerRadius = UDim.new(0, 8)
+
+-- Dragging
+local dragging = false
+local dragInput = nil
+local mouseStart = nil
+local frameStart = nil
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragInput = input
+        mouseStart = input.Position
+        frameStart = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                dragInput = nil
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mouseStart
+        frame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + delta.X, frameStart.Y.Scale, frameStart.Y.Offset + delta.Y)
+    end
+end)
+
+-- UI actions
+toggle.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+    flying = false
+    movingUp = false
+    movingDown = false
+end)
+
+flyBtn.MouseButton1Click:Connect(function()
+    flying = not flying
+    if flying then
+        flyBtn.Text = "FLIGHT: ON"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        fbs.Color = Color3.fromRGB(0, 210, 255)
+        status.Text = "Status: Online"
+        status.TextColor3 = Color3.fromRGB(100, 255, 150)
+    else
+        flyBtn.Text = "FLIGHT: OFF"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+        fbs.Color = Color3.fromRGB(100, 100, 255)
+        status.Text = "Status: Offline"
+        status.TextColor3 = Color3.fromRGB(160, 160, 170)
+    end
+end)
+
+spdMinus.MouseButton1Click:Connect(function()
+    speed = math.max(20, speed - 10)
+    speedLabel.Text = "Speed: " .. speed
+end)
+
+spdPlus.MouseButton1Click:Connect(function()
+    speed = math.min(200, speed + 10)
+    speedLabel.Text = "Speed: " .. speed
+end)
+
+upBtn.MouseButton1Down:Connect(function() movingUp = true end)
+upBtn.MouseButton1Up:Connect(function() movingUp = false end)
+downBtn.MouseButton1Down:Connect(function() movingDown = true end)
+downBtn.MouseButton1Up:Connect(function() movingDown = false end)
+
+lp.CharacterAdded:Connect(function()
+    flying = false
+    movingUp = false
+    movingDown = false
+    flyBtn.Text = "FLIGHT: OFF"
+    flyBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    fbs.Color = Color3.fromRGB(100, 100, 255)
+    status.Text = "Status: Offline"
+    status.TextColor3 = Color3.fromRGB(160, 160, 170)
+end)
+
+-- Flight loop
+RunService.RenderStepped:Connect(function()
+    if not flying then return end
+    local c = lp.Character
+    if not c then return end
+    local hrp = c:FindFirstChild("HumanoidRootPart")
+    local hum = c:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+
+    hum.PlatformStand = true
+
+    local move = hum.MoveDirection
+    if move.Magnitude > 0 then move = move.Unit else move = Vector3.zero end
+
+    local horizVel = move * speed
+
+    local vertVel = 0
+    if movingUp then vertVel = speed end
+    if movingDown then vertVel = -speed end
+    if movingUp and movingDown then vertVel = 0 end
+
+    hrp.AssemblyLinearVelocity = Vector3.new(horizVel.X, vertVel, horizVel.Z)
+end)
